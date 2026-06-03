@@ -40,9 +40,9 @@ export default function YouTubePanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 text-white">
-      <div className="p-3 border-b border-gray-700">
-        <p className="text-xs font-bold text-yellow-400 mb-2">
+    <div className="flex flex-col h-full bg-white text-gray-900 border-l border-gray-200">
+      <div className="p-3 border-b border-gray-200">
+        <p className="text-xs font-bold text-orange-600 mb-2">
           🎬 YouTube参照
         </p>
         <div className="flex gap-2">
@@ -52,7 +52,7 @@ export default function YouTubePanel({
             onChange={(e) => setInputUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleUrlSubmit()}
             placeholder="YouTube URL を貼り付け..."
-            className="flex-1 bg-gray-800 text-white text-xs px-2 py-1.5 rounded border border-gray-600 focus:outline-none focus:border-blue-400 placeholder-gray-500"
+            className="flex-1 bg-gray-50 text-gray-900 text-xs px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:border-blue-400 placeholder-gray-400"
           />
           <button
             onClick={handleUrlSubmit}
@@ -74,32 +74,32 @@ export default function YouTubePanel({
           />
         </div>
       ) : (
-        <div className="flex items-center justify-center flex-1 text-gray-600 text-sm p-4 text-center min-h-[160px]">
+        <div className="flex items-center justify-center flex-1 text-gray-400 text-sm p-4 text-center min-h-[160px] bg-gray-50">
           URLを入力すると<br />ここに動画が表示されます
         </div>
       )}
 
       {/* Timestamp capture */}
       {videoId && (
-        <div className="p-3 border-t border-gray-700">
-          <p className="text-xs text-gray-400 mb-2">タイムスタンプ記録</p>
+        <div className="p-3 border-t border-gray-200">
+          <p className="text-xs text-gray-500 mb-2">タイムスタンプ記録</p>
           <div className="flex gap-2 items-center">
             <input
               type="number"
               value={tsInput}
               onChange={(e) => setTsInput(e.target.value)}
               placeholder="秒数 (例: 125)"
-              className="flex-1 bg-gray-800 text-white text-xs px-2 py-1.5 rounded border border-gray-600 focus:outline-none focus:border-blue-400 placeholder-gray-500"
+              className="flex-1 bg-gray-50 text-gray-900 text-xs px-2 py-1.5 rounded border border-gray-300 focus:outline-none focus:border-blue-400 placeholder-gray-400"
             />
             <button
               onClick={handleTsCapture}
-              className="bg-green-700 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded transition-colors"
+              className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1.5 rounded transition-colors"
             >
               保存
             </button>
           </div>
           {youtubeTimestamp > 0 && (
-            <p className="text-xs text-green-400 mt-1">
+            <p className="text-xs text-green-600 mt-1">
               記録済み: {formatTime(youtubeTimestamp)} ({Math.floor(youtubeTimestamp)}秒)
             </p>
           )}
@@ -107,11 +107,11 @@ export default function YouTubePanel({
       )}
 
       {/* AI Analyze */}
-      <div className="p-3 border-t border-gray-700">
-        <p className="text-xs font-bold text-purple-400 mb-1">
+      <div className="p-3 border-t border-gray-200">
+        <p className="text-xs font-bold text-purple-600 mb-1">
           🤖 AI解析（スクリーンショット→コート自動配置）
         </p>
-        <p className="text-[10px] text-gray-500 mb-2">
+        <p className="text-[10px] text-gray-400 mb-2">
           動画の一場面をスクショして画像をアップロード → AIが選手配置を読み取ります
         </p>
         <label className="block">
@@ -129,8 +129,8 @@ export default function YouTubePanel({
             className={`
               block text-center text-xs px-3 py-2 rounded border border-dashed cursor-pointer transition-colors
               ${aiLoading
-                ? 'bg-purple-900/30 border-purple-600 text-purple-400 cursor-wait'
-                : 'bg-purple-900/20 border-purple-700 text-purple-300 hover:bg-purple-900/40 hover:border-purple-500'}
+                ? 'bg-purple-50 border-purple-300 text-purple-500 cursor-wait'
+                : 'bg-purple-50 border-purple-300 text-purple-600 hover:bg-purple-100 hover:border-purple-400'}
             `}
           >
             {aiLoading ? '🔄 解析中...' : '📸 画像をアップロード'}

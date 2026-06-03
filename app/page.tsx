@@ -253,18 +253,18 @@ export default function HomePage() {
   }, [loadSavedPlay]);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-950 text-white overflow-hidden">
+    <div className="h-screen flex flex-col bg-gray-50 text-gray-900 overflow-hidden">
       {/* ---- Header ---- */}
-      <header className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
+      <header className="flex items-center gap-3 px-4 py-2 bg-white border-b border-gray-200 shrink-0 shadow-sm">
         <span className="text-xl">🏀</span>
-        <h1 className="font-bold text-white text-sm">バスケ作戦版</h1>
+        <h1 className="font-bold text-gray-900 text-sm">バスケ作戦版</h1>
         {playName && (
-          <span className="text-yellow-400 text-sm font-medium truncate max-w-[200px]">
+          <span className="text-blue-600 text-sm font-medium truncate max-w-[200px]">
             — {playName}
           </span>
         )}
         {aiMessage && (
-          <span className="text-xs px-3 py-1 rounded-full bg-gray-800 text-gray-300 ml-2">
+          <span className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600 ml-2">
             {aiMessage}
           </span>
         )}
@@ -273,8 +273,8 @@ export default function HomePage() {
             onClick={() => setYtPanelOpen((v) => !v)}
             className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border transition-colors ${
               ytPanelOpen
-                ? 'bg-red-700/30 border-red-600 text-red-300'
-                : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'
+                ? 'bg-red-50 border-red-300 text-red-600'
+                : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
             🎬 YouTube
@@ -287,7 +287,7 @@ export default function HomePage() {
           </button>
           <button
             onClick={() => router.push('/plays')}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-gray-800 border border-gray-700 hover:border-gray-500 text-gray-300 transition-colors"
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 transition-colors"
           >
             📚 プレイ一覧
           </button>
@@ -309,7 +309,7 @@ export default function HomePage() {
         {/* Court area */}
         <div
           ref={courtContainerRef}
-          className="flex-1 flex items-center justify-center bg-gray-950 min-w-0 court-svg-container overflow-hidden p-2"
+          className="flex-1 flex items-center justify-center bg-gray-100 min-w-0 court-svg-container overflow-hidden p-2"
         >
           <div
             className="shadow-2xl rounded-lg overflow-hidden"
@@ -334,7 +334,7 @@ export default function HomePage() {
 
         {/* YouTube side panel */}
         {ytPanelOpen && (
-          <div className="w-80 border-l border-gray-700 shrink-0 overflow-y-auto">
+          <div className="w-80 shrink-0 overflow-y-auto">
             <YouTubePanel
               youtubeUrl={youtubeUrl}
               youtubeTimestamp={youtubeTimestamp}
@@ -348,16 +348,16 @@ export default function HomePage() {
       </div>
 
       {/* ---- Steps bar ---- */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-gray-900 border-t border-gray-700 shrink-0 overflow-x-auto">
+      <div className="flex items-center gap-2 px-3 py-2 bg-white border-t border-gray-200 shrink-0 overflow-x-auto shadow-sm">
         <button
           onClick={playAnimation}
           title={animating ? '停止' : 'ステップ再生'}
           className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors ${
             animating
-              ? 'bg-red-700 text-white'
+              ? 'bg-red-500 text-white'
               : steps.length > 1
-              ? 'bg-green-700 hover:bg-green-600 text-white'
-              : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+              ? 'bg-green-600 hover:bg-green-500 text-white'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
           disabled={steps.length <= 1 && !animating}
         >
@@ -372,7 +372,7 @@ export default function HomePage() {
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                   i === stepIndex
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
                 }`}
               >
                 Step {i + 1}
@@ -383,7 +383,7 @@ export default function HomePage() {
               {steps.length > 1 && (
                 <button
                   onClick={() => removeStep(i)}
-                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-700 text-white text-[10px] hidden group-hover:flex items-center justify-center leading-none"
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] hidden group-hover:flex items-center justify-center leading-none"
                 >
                   ×
                 </button>
@@ -393,13 +393,13 @@ export default function HomePage() {
           <button
             onClick={addStep}
             disabled={animating}
-            className="shrink-0 px-3 py-1.5 rounded text-xs font-medium bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white border border-dashed border-gray-600 transition-colors disabled:opacity-40"
+            className="shrink-0 px-3 py-1.5 rounded text-xs font-medium bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 border border-dashed border-gray-300 transition-colors disabled:opacity-40"
           >
             + 追加
           </button>
         </div>
 
-        <div className="shrink-0 text-[10px] text-gray-600 text-right leading-tight hidden xl:block">
+        <div className="shrink-0 text-[10px] text-gray-400 text-right leading-tight hidden xl:block">
           <div>V:選択 O:攻撃 D:守備 C:カット P:パス</div>
           <div>B:ドリブル S:スクリーン G:ゴースト E:消去</div>
         </div>

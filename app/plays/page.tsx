@@ -40,18 +40,18 @@ export default function PlaysPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-3 bg-gray-900 border-b border-gray-700">
+      <header className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
         <button
           onClick={() => router.push('/')}
-          className="text-gray-400 hover:text-white transition-colors text-sm"
+          className="text-gray-500 hover:text-gray-900 transition-colors text-sm"
         >
           ← 戻る
         </button>
         <span className="text-xl">📚</span>
-        <h1 className="font-bold text-white">プレイ一覧</h1>
-        <span className="text-gray-500 text-sm ml-1">({plays.length}件)</span>
+        <h1 className="font-bold text-gray-900">プレイ一覧</h1>
+        <span className="text-gray-400 text-sm ml-1">({plays.length}件)</span>
         <div className="ml-auto">
           <button
             onClick={() => router.push('/')}
@@ -70,7 +70,7 @@ export default function PlaysPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="プレイ名で検索..."
-            className="bg-gray-800 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:border-blue-400 placeholder-gray-500 text-sm w-64"
+            className="bg-white text-gray-900 px-3 py-2 rounded border border-gray-300 focus:outline-none focus:border-blue-400 placeholder-gray-400 text-sm w-64 shadow-sm"
           />
           <div className="flex gap-2">
             {FILTERS.map((f) => (
@@ -79,8 +79,8 @@ export default function PlaysPage() {
                 onClick={() => setFilter(f.id)}
                 className={`flex items-center gap-1.5 text-sm px-3 py-2 rounded border transition-colors ${
                   filter === f.id
-                    ? 'border-blue-500 bg-blue-500/20 text-white'
-                    : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                 }`}
               >
                 {f.icon} {f.label}
@@ -91,11 +91,11 @@ export default function PlaysPage() {
 
         {/* Play grid */}
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-gray-600">
+          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
             {plays.length === 0 ? (
               <>
                 <div className="text-5xl mb-4">🏀</div>
-                <p className="text-lg font-medium mb-2">プレイがまだありません</p>
+                <p className="text-lg font-medium text-gray-600 mb-2">プレイがまだありません</p>
                 <p className="text-sm mb-6">作戦版でプレイを作成して保存してみましょう</p>
                 <button
                   onClick={() => router.push('/')}
@@ -107,7 +107,7 @@ export default function PlaysPage() {
             ) : (
               <>
                 <div className="text-4xl mb-3">🔍</div>
-                <p className="text-base">該当するプレイが見つかりません</p>
+                <p className="text-base text-gray-500">該当するプレイが見つかりません</p>
               </>
             )}
           </div>
