@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏀 バスケ作戦版
 
-## Getting Started
+バスケットボールのプレイブック作成・管理Webアプリ。
+ハーフコートオフェンス、サイドライン/エンドラインのインバウンズプレイを登録・管理できます。
 
-First, run the development server:
+## 機能
+
+- 🎨 **コート描画** — オフェンス/ディフェンス選手の配置、カット・パス・ドリブルの矢印、スクリーン記号
+- 📋 **ステップ管理** — プレイをステップ分割してアニメーション再生
+- 💾 **プレイ保存** — LocalStorageに保存してプレイ一覧で管理（ハーフコート/サイドライン/エンドライン）
+- 🎬 **YouTube連携** — 動画URLを横に表示しながら作図、タイムスタンプ記録
+- 🤖 **AI解析** — バスケのプレイ写真/スクショをアップロードするとClaudeが選手位置を自動配置
+
+## キーボードショートカット
+
+| キー | ツール |
+|------|--------|
+| V | 選択・移動 |
+| O | オフェンス選手配置 |
+| D | ディフェンス選手配置 |
+| C | カット（ランニング）矢印 |
+| P | パス矢印（破線） |
+| B | ドリブル矢印（点線） |
+| S | スクリーン記号 |
+| G | ゴーストスクリーン |
+| E | 削除 |
+| Ctrl+Z | 元に戻す |
+
+## セットアップ
+
+```bash
+npm install
+```
+
+`.env.local` を作成してAnthropicのAPIキーを設定：
+```
+ANTHROPIC_API_KEY=your_api_key_here
+```
+
+APIキーは https://console.anthropic.com で取得できます。
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 で開きます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Vercelデプロイ
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. GitHubにリポジトリをpush
+2. [Vercel](https://vercel.com) でプロジェクトをimport
+3. **Environment Variables** に `ANTHROPIC_API_KEY` を追加
+4. Deploy!
 
-## Learn More
+> AI解析機能はAnthropicのAPIキーが必要です。キー未設定でもコート描画・プレイ管理は使えます。
 
-To learn more about Next.js, take a look at the following resources:
+## 技術スタック
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- SVG (コート描画)
+- @anthropic-ai/sdk (AI解析)
+- localStorage (プレイデータ保存)
