@@ -121,7 +121,7 @@ export default function CourtSVG() {
 
       {/* 3-point arc */}
       <path
-        d="M 30 144 A 237.5 237.5 0 0 1 470 144"
+        d="M 30 144 A 237.5 237.5 0 0 0 470 144"
         fill="none"
         stroke="white"
         strokeWidth="2"
