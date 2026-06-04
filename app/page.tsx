@@ -23,10 +23,6 @@ export default function HomePage() {
   const [history, setHistory] = useState<PlayStep[][]>([[createEmptyStep()]]);
   const [historyIdx, setHistoryIdx] = useState(0);
 
-  // ---- Player counts ----
-  const [offenseCount, setOffenseCount] = useState(0);
-  const [defenseCount, setDefenseCount] = useState(0);
-
   // ---- Play metadata ----
   const [playName, setPlayName] = useState('');
   const [editingPlayId, setEditingPlayId] = useState<string | null>(null);
@@ -46,6 +42,16 @@ export default function HomePage() {
   const animRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentStep = steps[stepIndex] ?? createEmptyStep();
+
+  // BUG FIX: derive counts from actual players so deletion/undo always stays in sync
+  const offensePlayers = currentStep.players.filter((p) => p.type === 'offense');
+  const defensePlayers = currentStep.players.filter((p) => p.type === 'defense');
+  const offenseCount = offensePlayers.length > 0
+    ? Math.max(...offensePlayers.map((p) => p.number))
+    : 0;
+  const defenseCount = defensePlayers.length > 0
+    ? Math.max(...defensePlayers.map((p) => p.number))
+    : 0;
 
   // ---------- History helpers ----------
   const pushHistory = useCallback(
@@ -100,18 +106,6 @@ export default function HomePage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleUndo]);
 
-  // Sync player counts when switching steps
-  useEffect(() => {
-    const players = steps[stepIndex]?.players ?? [];
-    const offPlayers = players.filter((p) => p.type === 'offense');
-    const defPlayers = players.filter((p) => p.type === 'defense');
-    const maxOff = offPlayers.length > 0 ? Math.max(...offPlayers.map((p) => p.number)) : 0;
-    const maxDef = defPlayers.length > 0 ? Math.max(...defPlayers.map((p) => p.number)) : 0;
-    setOffenseCount(maxOff);
-    setDefenseCount(maxDef);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stepIndex]);
-
   // ---------- Step management ----------
   const addStep = () => {
     const newStep = createEmptyStep(currentStep.players);
@@ -134,8 +128,6 @@ export default function HomePage() {
     const newSteps = steps.map((s, i) => (i === stepIndex ? empty : s));
     setSteps(newSteps);
     pushHistory(newSteps);
-    setOffenseCount(0);
-    setDefenseCount(0);
   };
 
   // ---------- Animation ----------
@@ -212,12 +204,7 @@ export default function HomePage() {
           y: Math.max(20, Math.min(COURT_HEIGHT - 20, p.y)),
         })
       );
-      const updated: PlayStep = { ...currentStep, players };
-      handleStepChange(updated);
-      const offCnt = players.filter((p) => p.type === 'offense').length;
-      const defCnt = players.filter((p) => p.type === 'defense').length;
-      setOffenseCount(offCnt);
-      setDefenseCount(defCnt);
+      handleStepChange({ ...currentStep, players });
       setAiMessage(`🤖 ${data.description || `${players.length}人の選手を検出しました`}`);
     } catch (e) {
       setAiMessage(`❌ エラー: ${String(e)}`);
@@ -326,8 +313,6 @@ export default function HomePage() {
               offenseCount={offenseCount}
               defenseCount={defenseCount}
               onStepChange={handleStepChange}
-              onOffenseCountChange={setOffenseCount}
-              onDefenseCountChange={setDefenseCount}
             />
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import {
   Tool,
   Player,
@@ -27,12 +27,10 @@ interface CourtBoardProps {
   offenseCount: number;
   defenseCount: number;
   onStepChange: (step: PlayStep) => void;
-  onOffenseCountChange: (n: number) => void;
-  onDefenseCountChange: (n: number) => void;
   animating?: boolean;
 }
 
-// ---------- Arrow rendering helpers ----------
+// ---------- Sub-components ----------
 
 function ArrowheadDef({
   id,
@@ -68,13 +66,12 @@ function ArrowElement({ arrow }: { arrow: Arrow }) {
     dribble: '#f97316',
     cut: '#111827',
   };
-  const color = colorMap[arrow.type];
-  const markerId = `ah-${arrow.type}`;
   const dashMap: Record<ArrowType, string> = {
     pass: '10 5',
     dribble: '3 7',
     cut: 'none',
   };
+  const color = colorMap[arrow.type];
   const dashArray = dashMap[arrow.type];
 
   return (
@@ -87,7 +84,7 @@ function ArrowElement({ arrow }: { arrow: Arrow }) {
       strokeWidth="2.5"
       strokeDasharray={dashArray === 'none' ? undefined : dashArray}
       strokeLinecap="round"
-      markerEnd={`url(#${markerId})`}
+      markerEnd={`url(#ah-${arrow.type})`}
     />
   );
 }
@@ -99,12 +96,10 @@ function ScreenElement({ screen }: { screen: ScreenMarker }) {
   const rad = (screen.rotation * Math.PI) / 180;
   const dx = Math.cos(rad) * (len / 2);
   const dy = Math.sin(rad) * (len / 2);
-  // Perpendicular tick for the ⊥ shape
   const px = -Math.sin(rad) * 8;
   const py = Math.cos(rad) * 8;
   return (
     <g>
-      {/* main bar */}
       <line
         x1={screen.x - dx}
         y1={screen.y - dy}
@@ -115,7 +110,6 @@ function ScreenElement({ screen }: { screen: ScreenMarker }) {
         strokeDasharray={dash}
         strokeLinecap="round"
       />
-      {/* setter indicator dot */}
       <circle cx={screen.x + px} cy={screen.y + py} r="4" fill={color} />
     </g>
   );
@@ -141,69 +135,38 @@ function PlayerElement({
         stroke={border}
         strokeWidth={selected ? 3 : 2}
       />
-      {isOffense ? (
-        <text
-          x={player.x}
-          y={player.y + 5}
-          textAnchor="middle"
-          fill="white"
-          fontSize="14"
-          fontWeight="bold"
-          fontFamily="Arial, sans-serif"
-        >
-          {player.number}
-        </text>
-      ) : (
-        <text
-          x={player.x}
-          y={player.y + 5}
-          textAnchor="middle"
-          fill="white"
-          fontSize="14"
-          fontWeight="bold"
-          fontFamily="Arial, sans-serif"
-        >
-          X
-        </text>
-      )}
+      <text
+        x={player.x}
+        y={player.y + 5}
+        textAnchor="middle"
+        fill="white"
+        fontSize="14"
+        fontWeight="bold"
+        fontFamily="Arial, sans-serif"
+      >
+        {isOffense ? player.number : 'X'}
+      </text>
     </g>
   );
 }
 
 function PreviewArrow({
-  x1,
-  y1,
-  x2,
-  y2,
-  type,
+  x1, y1, x2, y2, type,
 }: {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  type: ArrowType;
+  x1: number; y1: number; x2: number; y2: number; type: ArrowType;
 }) {
   const colorMap: Record<ArrowType, string> = {
-    pass: '#3b82f6',
-    dribble: '#f97316',
-    cut: '#111827',
+    pass: '#3b82f6', dribble: '#f97316', cut: '#111827',
   };
   const dashMap: Record<ArrowType, string> = {
-    pass: '10 5',
-    dribble: '3 7',
-    cut: 'none',
+    pass: '10 5', dribble: '3 7', cut: 'none',
   };
-  const color = colorMap[type];
-  const dash = dashMap[type];
   return (
     <line
-      x1={x1}
-      y1={y1}
-      x2={x2}
-      y2={y2}
-      stroke={color}
+      x1={x1} y1={y1} x2={x2} y2={y2}
+      stroke={colorMap[type]}
       strokeWidth="2.5"
-      strokeDasharray={dash === 'none' ? undefined : dash}
+      strokeDasharray={dashMap[type] === 'none' ? undefined : dashMap[type]}
       strokeLinecap="round"
       opacity={0.6}
       markerEnd={`url(#ah-${type})`}
@@ -211,39 +174,58 @@ function PreviewArrow({
   );
 }
 
+// ---------- Main component ----------
+
 export default function CourtBoard({
   step,
   tool,
   offenseCount,
   defenseCount,
   onStepChange,
-  onOffenseCountChange,
-  onDefenseCountChange,
 }: CourtBoardProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Selection
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // BUG FIX: clear selection when tool changes
+  useEffect(() => {
+    setSelectedId(null);
+  }, [tool]);
+
+  // Dragging: track locally to avoid history spam (only commit on mouseUp)
   const [dragging, setDragging] = useState<{
     id: string;
     offsetX: number;
     offsetY: number;
-    type: 'player';
   } | null>(null);
-  const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(
-    null
-  );
-  const [drawCurrent, setDrawCurrent] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [screenDrag, setScreenDrag] = useState<{
-    id: string;
-    cx: number;
-    cy: number;
-  } | null>(null);
+  // BUG FIX: local position during drag — no parent call until mouseUp
+  const [dragPos, setDragPos] = useState<{ id: string; x: number; y: number } | null>(null);
+
+  // Arrow drawing
+  const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
+  const [drawCurrent, setDrawCurrent] = useState<{ x: number; y: number } | null>(null);
+
+  // Screen rotation drag
+  const [screenDrag, setScreenDrag] = useState<{ id: string; cx: number; cy: number } | null>(null);
 
   const arrowTool = (tool === 'pass' || tool === 'dribble' || tool === 'cut')
     ? (tool as ArrowType)
     : null;
+
+  // Commit the dragged player's position to parent (called on mouseUp / mouseLeave)
+  const commitDrag = useCallback(() => {
+    if (dragPos) {
+      onStepChange({
+        ...step,
+        players: step.players.map((p) =>
+          p.id === dragPos.id ? { ...p, x: dragPos.x, y: dragPos.y } : p
+        ),
+      });
+    }
+    setDragging(null);
+    setDragPos(null);
+  }, [dragPos, step, onStepChange]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
@@ -251,16 +233,10 @@ export default function CourtBoard({
       const { x, y } = getSVGCoords(e, svgRef.current);
 
       if (tool === 'select') {
-        // Check players
         for (const p of [...step.players].reverse()) {
           if (isNear(x, y, p.x, p.y, PLAYER_RADIUS + 4)) {
             setSelectedId(p.id);
-            setDragging({
-              id: p.id,
-              offsetX: x - p.x,
-              offsetY: y - p.y,
-              type: 'player',
-            });
+            setDragging({ id: p.id, offsetX: x - p.x, offsetY: y - p.y });
             e.stopPropagation();
             return;
           }
@@ -270,35 +246,23 @@ export default function CourtBoard({
       }
 
       if (tool === 'eraser') {
-        // Delete players
         for (const p of [...step.players].reverse()) {
           if (isNear(x, y, p.x, p.y, PLAYER_RADIUS + 4)) {
-            onStepChange({
-              ...step,
-              players: step.players.filter((pl) => pl.id !== p.id),
-            });
+            onStepChange({ ...step, players: step.players.filter((pl) => pl.id !== p.id) });
             return;
           }
         }
-        // Delete arrows (click near midpoint)
         for (const a of [...step.arrows].reverse()) {
           const mx = (a.x1 + a.x2) / 2;
           const my = (a.y1 + a.y2) / 2;
-          if (isNear(x, y, mx, my, 16)) {
-            onStepChange({
-              ...step,
-              arrows: step.arrows.filter((ar) => ar.id !== a.id),
-            });
+          if (isNear(x, y, mx, my, 18)) {
+            onStepChange({ ...step, arrows: step.arrows.filter((ar) => ar.id !== a.id) });
             return;
           }
         }
-        // Delete screens
         for (const s of [...step.screens].reverse()) {
           if (isNear(x, y, s.x, s.y, 20)) {
-            onStepChange({
-              ...step,
-              screens: step.screens.filter((sc) => sc.id !== s.id),
-            });
+            onStepChange({ ...step, screens: step.screens.filter((sc) => sc.id !== s.id) });
             return;
           }
         }
@@ -307,31 +271,25 @@ export default function CourtBoard({
 
       if (tool === 'offense') {
         if (offenseCount >= 5) return;
-        const num = offenseCount + 1;
         const newPlayer: Player = {
           id: generateId(),
           type: 'offense',
-          number: num,
-          x,
-          y,
+          number: offenseCount + 1,
+          x, y,
         };
         onStepChange({ ...step, players: [...step.players, newPlayer] });
-        onOffenseCountChange(num);
         return;
       }
 
       if (tool === 'defense') {
         if (defenseCount >= 5) return;
-        const num = defenseCount + 1;
         const newPlayer: Player = {
           id: generateId(),
           type: 'defense',
-          number: num,
-          x,
-          y,
+          number: defenseCount + 1,
+          x, y,
         };
         onStepChange({ ...step, players: [...step.players, newPlayer] });
-        onDefenseCountChange(num);
         return;
       }
 
@@ -344,8 +302,7 @@ export default function CourtBoard({
       if (tool === 'screen' || tool === 'ghostScreen') {
         const newScreen: ScreenMarker = {
           id: generateId(),
-          x,
-          y,
+          x, y,
           rotation: 0,
           ghost: tool === 'ghostScreen',
         };
@@ -355,16 +312,7 @@ export default function CourtBoard({
         return;
       }
     },
-    [
-      tool,
-      step,
-      arrowTool,
-      offenseCount,
-      defenseCount,
-      onStepChange,
-      onOffenseCountChange,
-      onDefenseCountChange,
-    ]
+    [tool, step, arrowTool, offenseCount, defenseCount, onStepChange]
   );
 
   const handleMouseMove = useCallback(
@@ -372,14 +320,10 @@ export default function CourtBoard({
       const { x, y } = getSVGCoords(e, svgRef.current);
 
       if (dragging) {
+        // BUG FIX: update locally only — no parent call until mouseUp
         const newX = clamp(x - dragging.offsetX, PLAYER_RADIUS, COURT_WIDTH - PLAYER_RADIUS);
         const newY = clamp(y - dragging.offsetY, PLAYER_RADIUS, COURT_HEIGHT - PLAYER_RADIUS);
-        onStepChange({
-          ...step,
-          players: step.players.map((p) =>
-            p.id === dragging.id ? { ...p, x: newX, y: newY } : p
-          ),
-        });
+        setDragPos({ id: dragging.id, x: newX, y: newY });
         return;
       }
 
@@ -409,7 +353,8 @@ export default function CourtBoard({
       const { x, y } = getSVGCoords(e, svgRef.current);
 
       if (dragging) {
-        setDragging(null);
+        // BUG FIX: commit drag to history exactly once
+        commitDrag();
         return;
       }
 
@@ -421,8 +366,7 @@ export default function CourtBoard({
       if (drawStart && arrowTool) {
         const dx = x - drawStart.x;
         const dy = y - drawStart.y;
-        const length = Math.sqrt(dx * dx + dy * dy);
-        if (length > 10) {
+        if (Math.sqrt(dx * dx + dy * dy) > 10) {
           const newArrow: Arrow = {
             id: generateId(),
             type: arrowTool,
@@ -431,17 +375,14 @@ export default function CourtBoard({
             x2: x,
             y2: y,
           };
-          onStepChange({
-            ...step,
-            arrows: [...step.arrows, newArrow],
-          });
+          onStepChange({ ...step, arrows: [...step.arrows, newArrow] });
         }
         setDrawStart(null);
         setDrawCurrent(null);
         return;
       }
     },
-    [dragging, screenDrag, drawStart, arrowTool, step, onStepChange]
+    [dragging, screenDrag, drawStart, arrowTool, step, onStepChange, commitDrag]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -449,15 +390,19 @@ export default function CourtBoard({
       setDrawStart(null);
       setDrawCurrent(null);
     }
-    if (dragging) setDragging(null);
-    if (screenDrag) setScreenDrag(null);
-  }, [drawStart, dragging, screenDrag]);
+    if (dragging) {
+      // BUG FIX: commit on mouse leave too so position isn't lost
+      commitDrag();
+    }
+    if (screenDrag) {
+      setScreenDrag(null);
+    }
+  }, [drawStart, dragging, screenDrag, commitDrag]);
 
   const getCursor = () => {
     if (tool === 'select') return 'default';
     if (tool === 'eraser') return 'cell';
-    if (arrowTool || tool === 'screen' || tool === 'ghostScreen')
-      return 'crosshair';
+    if (arrowTool || tool === 'screen' || tool === 'ghostScreen') return 'crosshair';
     return 'copy';
   };
 
@@ -473,38 +418,38 @@ export default function CourtBoard({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Arrow marker defs */}
       <defs>
         <ArrowheadDef id="ah-cut" color="#111827" filled />
         <ArrowheadDef id="ah-pass" color="#3b82f6" filled={false} />
         <ArrowheadDef id="ah-dribble" color="#f97316" filled />
       </defs>
 
-      {/* Court background */}
       <CourtSVG />
 
-      {/* Arrows */}
       {step.arrows.map((a) => (
         <ArrowElement key={a.id} arrow={a} />
       ))}
 
-      {/* Screens */}
       {step.screens.map((s) => (
         <ScreenElement key={s.id} screen={s} />
       ))}
 
-      {/* Players */}
-      {step.players.map((p) => (
-        <PlayerElement key={p.id} player={p} selected={p.id === selectedId} />
-      ))}
+      {/* BUG FIX: use local dragPos for the currently dragged player */}
+      {step.players.map((p) => {
+        const isDragged = dragPos?.id === p.id;
+        return (
+          <PlayerElement
+            key={p.id}
+            player={isDragged ? { ...p, x: dragPos!.x, y: dragPos!.y } : p}
+            selected={p.id === selectedId}
+          />
+        );
+      })}
 
-      {/* Drawing preview */}
       {drawStart && drawCurrent && arrowTool && (
         <PreviewArrow
-          x1={drawStart.x}
-          y1={drawStart.y}
-          x2={drawCurrent.x}
-          y2={drawCurrent.y}
+          x1={drawStart.x} y1={drawStart.y}
+          x2={drawCurrent.x} y2={drawCurrent.y}
           type={arrowTool}
         />
       )}

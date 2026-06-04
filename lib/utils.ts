@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { Player, PlayStep } from './types';
 
 export const COURT_WIDTH = 500;
@@ -43,7 +44,7 @@ export function clamp(val: number, min: number, max: number): number {
 
 /** Get SVG coords from a mouse event relative to SVG element */
 export function getSVGCoords(
-  e: React.MouseEvent<SVGSVGElement>,
+  e: MouseEvent<SVGSVGElement>,
   svgEl: SVGSVGElement | null
 ): { x: number; y: number } {
   if (!svgEl) return { x: 0, y: 0 };
