@@ -9,6 +9,8 @@ import CourtBoard from '@/components/court/CourtBoard';
 import Toolbar from '@/components/toolbar/Toolbar';
 import SavePlayModal from '@/components/play/SavePlayModal';
 import YouTubePanel from '@/components/youtube/YouTubePanel';
+import AICoachPanel from '@/components/coach/AICoachPanel';
+import { SavedPlaySummary } from '@/app/api/ai-suggest/route';
 
 export default function HomePage() {
   const router = useRouter();
@@ -33,6 +35,10 @@ export default function HomePage() {
   const [ytPanelOpen, setYtPanelOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
+
+  // ---- AI Coach ----
+  const [coachPanelOpen, setCoachPanelOpen] = useState(false);
+  const [savedPlaysSummary, setSavedPlaysSummary] = useState<SavedPlaySummary[]>([]);
 
   // ---- Modals ----
   const [saveModalOpen, setSaveModalOpen] = useState(false);
@@ -239,6 +245,20 @@ export default function HomePage() {
     }
   }, [loadSavedPlay]);
 
+  // Refresh saved plays list whenever the coach panel opens
+  useEffect(() => {
+    if (coachPanelOpen) {
+      setSavedPlaysSummary(
+        loadPlays().map((p) => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          description: p.description,
+        }))
+      );
+    }
+  }, [coachPanelOpen]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-50 text-gray-900 overflow-hidden">
       {/* ---- Header ---- */}
@@ -257,7 +277,7 @@ export default function HomePage() {
         )}
         <div className="ml-auto flex items-center gap-2">
           <button
-            onClick={() => setYtPanelOpen((v) => !v)}
+            onClick={() => { setYtPanelOpen((v) => !v); setCoachPanelOpen(false); }}
             className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border transition-colors ${
               ytPanelOpen
                 ? 'bg-red-50 border-red-300 text-red-600'
@@ -265,6 +285,16 @@ export default function HomePage() {
             }`}
           >
             🎬 YouTube
+          </button>
+          <button
+            onClick={() => { setCoachPanelOpen((v) => !v); setYtPanelOpen(false); }}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border transition-colors ${
+              coachPanelOpen
+                ? 'bg-orange-50 border-orange-300 text-orange-600'
+                : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50'
+            }`}
+          >
+            🏆 AIコーチ
           </button>
           <button
             onClick={() => setSaveModalOpen(true)}
@@ -327,6 +357,16 @@ export default function HomePage() {
               onTimestampChange={setYoutubeTimestamp}
               onAIAnalyze={handleAIAnalyze}
               aiLoading={aiLoading}
+            />
+          </div>
+        )}
+
+        {/* AI Coach side panel */}
+        {coachPanelOpen && (
+          <div className="w-80 shrink-0 overflow-y-auto">
+            <AICoachPanel
+              savedPlays={savedPlaysSummary}
+              onLoadPlay={(id) => { loadSavedPlay(id); setCoachPanelOpen(false); }}
             />
           </div>
         )}
