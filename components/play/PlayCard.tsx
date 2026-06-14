@@ -12,9 +12,10 @@ interface PlayCardProps {
   play: Play;
   onLoad: (play: Play) => void;
   onDelete: (id: string) => void;
+  isTemplate?: boolean;
 }
 
-export default function PlayCard({ play, onLoad, onDelete }: PlayCardProps) {
+export default function PlayCard({ play, onLoad, onDelete, isTemplate }: PlayCardProps) {
   const cat = CATEGORY_LABELS[play.category];
 
   return (
@@ -35,8 +36,14 @@ export default function PlayCard({ play, onLoad, onDelete }: PlayCardProps) {
         <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">
           {play.steps.length} step{play.steps.length !== 1 ? 's' : ''}
         </div>
+        {/* Template badge */}
+        {isTemplate && (
+          <div className="absolute top-2 left-2 bg-purple-600/90 text-white text-xs px-2 py-0.5 rounded-full">
+            📖 定番
+          </div>
+        )}
         {/* YouTube badge */}
-        {play.youtubeUrl && (
+        {play.youtubeUrl && !isTemplate && (
           <div className="absolute top-2 left-2 bg-red-600/90 text-white text-xs px-2 py-0.5 rounded-full">
             🎬 YT
           </div>

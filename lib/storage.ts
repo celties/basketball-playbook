@@ -1,4 +1,5 @@
 import { Play } from './types';
+import { DEFAULT_PLAYS, TEMPLATE_IDS } from './defaultPlays';
 
 const STORAGE_KEY = 'basketball_plays_v1';
 
@@ -41,3 +42,23 @@ export function deletePlay(id: string): void {
 export function getPlay(id: string): Play | undefined {
   return loadPlays().find((p) => p.id === id);
 }
+
+/** Seed default template plays on first visit (no-op if any plays already exist). */
+export function seedDefaultPlays(): void {
+  if (typeof window === 'undefined') return;
+  const existing = loadPlays();
+  if (existing.length > 0) return;
+  savePlays(DEFAULT_PLAYS);
+}
+
+/** Re-add template plays that are missing (e.g. after user deletes them). */
+export function resetTemplates(): void {
+  if (typeof window === 'undefined') return;
+  const existing = loadPlays();
+  const existingIds = new Set(existing.map((p) => p.id));
+  const missing = DEFAULT_PLAYS.filter((p) => !existingIds.has(p.id));
+  if (missing.length === 0) return;
+  savePlays([...missing, ...existing]);
+}
+
+export { TEMPLATE_IDS };

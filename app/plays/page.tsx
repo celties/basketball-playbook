@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, PlayCategory } from '@/lib/types';
-import { loadPlays, deletePlay } from '@/lib/storage';
+import { loadPlays, deletePlay, seedDefaultPlays, resetTemplates, TEMPLATE_IDS } from '@/lib/storage';
 import PlayCard from '@/components/play/PlayCard';
 
 const FILTERS: { id: PlayCategory | 'all'; label: string; icon: string }[] = [
@@ -20,6 +20,7 @@ export default function PlaysPage() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    seedDefaultPlays();
     setPlays(loadPlays());
   }, []);
 
@@ -52,7 +53,13 @@ export default function PlaysPage() {
         <span className="text-xl">📚</span>
         <h1 className="font-bold text-gray-900">プレイ一覧</h1>
         <span className="text-gray-400 text-sm ml-1">({plays.length}件)</span>
-        <div className="ml-auto">
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={() => { resetTemplates(); setPlays(loadPlays()); }}
+            className="text-xs px-3 py-1.5 rounded bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium border border-purple-200 transition-colors"
+          >
+            📖 定番プレイを追加
+          </button>
           <button
             onClick={() => router.push('/')}
             className="text-xs px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold transition-colors"
@@ -119,6 +126,7 @@ export default function PlaysPage() {
                 play={play}
                 onLoad={handleLoad}
                 onDelete={handleDelete}
+                isTemplate={TEMPLATE_IDS.has(play.id)}
               />
             ))}
           </div>

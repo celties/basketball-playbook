@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Tool, PlayStep, PlayCategory, Player } from '@/lib/types';
 import { generateId, createEmptyStep, COURT_WIDTH, COURT_HEIGHT } from '@/lib/utils';
-import { savePlay, loadPlays } from '@/lib/storage';
+import { savePlay, loadPlays, seedDefaultPlays } from '@/lib/storage';
 import CourtBoard from '@/components/court/CourtBoard';
 import Toolbar from '@/components/toolbar/Toolbar';
 import SavePlayModal from '@/components/play/SavePlayModal';
@@ -232,6 +232,10 @@ export default function HomePage() {
     setYoutubeTimestamp(play.youtubeTimestamp || 0);
     setHistory([play.steps.map((s) => ({ ...s }))]);
     setHistoryIdx(0);
+  }, []);
+
+  useEffect(() => {
+    seedDefaultPlays();
   }, []);
 
   useEffect(() => {
