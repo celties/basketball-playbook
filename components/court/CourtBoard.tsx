@@ -16,10 +16,13 @@ import {
   isNear,
   generateId,
   clamp,
+  DEFAULT_BALL,
 } from '@/lib/utils';
 import CourtSVG from './CourtSVG';
 
 const PLAYER_RADIUS = 18;
+const BALL_ID = '__ball__';
+const BALL_R = 11;
 
 interface CourtBoardProps {
   step: PlayStep;
@@ -150,6 +153,36 @@ function PlayerElement({
   );
 }
 
+function BallElement({ x, y, selected }: { x: number; y: number; selected: boolean }) {
+  return (
+    <g style={{ cursor: 'grab' }}>
+      {/* Drop shadow */}
+      <circle cx={x + 1} cy={y + 2} r={BALL_R} fill="rgba(0,0,0,0.25)" />
+      {/* Body */}
+      <circle
+        cx={x} cy={y} r={BALL_R}
+        fill="#e85d04"
+        stroke={selected ? '#facc15' : '#9a3412'}
+        strokeWidth={selected ? 2.5 : 1.5}
+      />
+      {/* Horizontal seam */}
+      <line x1={x - BALL_R} y1={y} x2={x + BALL_R} y2={y} stroke="#9a3412" strokeWidth="1" />
+      {/* Vertical seam */}
+      <line x1={x} y1={y - BALL_R} x2={x} y2={y + BALL_R} stroke="#9a3412" strokeWidth="1" />
+      {/* Left arc */}
+      <path
+        d={`M ${x - BALL_R * 0.65} ${y - BALL_R} A ${BALL_R * 0.5} ${BALL_R} 0 0 0 ${x - BALL_R * 0.65} ${y + BALL_R}`}
+        fill="none" stroke="#9a3412" strokeWidth="1"
+      />
+      {/* Right arc */}
+      <path
+        d={`M ${x + BALL_R * 0.65} ${y - BALL_R} A ${BALL_R * 0.5} ${BALL_R} 0 0 1 ${x + BALL_R * 0.65} ${y + BALL_R}`}
+        fill="none" stroke="#9a3412" strokeWidth="1"
+      />
+    </g>
+  );
+}
+
 function PreviewArrow({
   x1, y1, x2, y2, type,
 }: {
@@ -213,15 +246,19 @@ export default function CourtBoard({
     ? (tool as ArrowType)
     : null;
 
-  // Commit the dragged player's position to parent (called on mouseUp / mouseLeave)
+  // Commit the dragged element's position to parent (called on mouseUp / mouseLeave)
   const commitDrag = useCallback(() => {
     if (dragPos) {
-      onStepChange({
-        ...step,
-        players: step.players.map((p) =>
-          p.id === dragPos.id ? { ...p, x: dragPos.x, y: dragPos.y } : p
-        ),
-      });
+      if (dragPos.id === BALL_ID) {
+        onStepChange({ ...step, ball: { x: dragPos.x, y: dragPos.y } });
+      } else {
+        onStepChange({
+          ...step,
+          players: step.players.map((p) =>
+            p.id === dragPos.id ? { ...p, x: dragPos.x, y: dragPos.y } : p
+          ),
+        });
+      }
     }
     setDragging(null);
     setDragPos(null);
@@ -233,6 +270,7 @@ export default function CourtBoard({
       const { x, y } = getSVGCoords(e, svgRef.current);
 
       if (tool === 'select') {
+        // Players have priority (rendered on top)
         for (const p of [...step.players].reverse()) {
           if (isNear(x, y, p.x, p.y, PLAYER_RADIUS + 4)) {
             setSelectedId(p.id);
@@ -240,6 +278,14 @@ export default function CourtBoard({
             e.stopPropagation();
             return;
           }
+        }
+        // Then ball
+        const ball = step.ball ?? DEFAULT_BALL;
+        if (isNear(x, y, ball.x, ball.y, BALL_R + 6)) {
+          setSelectedId(BALL_ID);
+          setDragging({ id: BALL_ID, offsetX: x - ball.x, offsetY: y - ball.y });
+          e.stopPropagation();
+          return;
         }
         setSelectedId(null);
         return;
@@ -320,9 +366,10 @@ export default function CourtBoard({
       const { x, y } = getSVGCoords(e, svgRef.current);
 
       if (dragging) {
-        // BUG FIX: update locally only — no parent call until mouseUp
-        const newX = clamp(x - dragging.offsetX, PLAYER_RADIUS, COURT_WIDTH - PLAYER_RADIUS);
-        const newY = clamp(y - dragging.offsetY, PLAYER_RADIUS, COURT_HEIGHT - PLAYER_RADIUS);
+        const isBall = dragging.id === BALL_ID;
+        const margin = isBall ? BALL_R : PLAYER_RADIUS;
+        const newX = clamp(x - dragging.offsetX, margin, COURT_WIDTH - margin);
+        const newY = clamp(y - dragging.offsetY, margin, COURT_HEIGHT - margin);
         setDragPos({ id: dragging.id, x: newX, y: newY });
         return;
       }
@@ -433,6 +480,16 @@ export default function CourtBoard({
       {step.screens.map((s) => (
         <ScreenElement key={s.id} screen={s} />
       ))}
+
+      {/* Ball — rendered above arrows/screens, below players */}
+      {(() => {
+        const ball = dragPos?.id === BALL_ID
+          ? { x: dragPos.x, y: dragPos.y }
+          : (step.ball ?? DEFAULT_BALL);
+        return (
+          <BallElement x={ball.x} y={ball.y} selected={selectedId === BALL_ID} />
+        );
+      })()}
 
       {/* BUG FIX: use local dragPos for the currently dragged player */}
       {step.players.map((p) => {

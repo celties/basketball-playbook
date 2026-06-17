@@ -1,19 +1,22 @@
 import type { MouseEvent } from 'react';
-import { Player, PlayStep } from './types';
+import { Player, PlayStep, BallPosition } from './types';
 
 export const COURT_WIDTH = 500;
 export const COURT_HEIGHT = 470;
+
+export const DEFAULT_BALL: BallPosition = { x: 250, y: 340 };
 
 export function generateId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-export function createEmptyStep(players?: Player[]): PlayStep {
+export function createEmptyStep(players?: Player[], ball?: BallPosition): PlayStep {
   return {
     id: generateId(),
     players: players ? players.map((p) => ({ ...p })) : [],
     arrows: [],
     screens: [],
+    ball: ball ?? { ...DEFAULT_BALL },
   };
 }
 

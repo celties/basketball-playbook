@@ -114,7 +114,7 @@ export default function HomePage() {
 
   // ---------- Step management ----------
   const addStep = () => {
-    const newStep = createEmptyStep(currentStep.players);
+    const newStep = createEmptyStep(currentStep.players, currentStep.ball);
     const newSteps = [...steps, newStep];
     setSteps(newSteps);
     pushHistory(newSteps);
